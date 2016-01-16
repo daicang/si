@@ -1,0 +1,4 @@
+
+(define (main)
+  (let ((i (input)))
+    (print i)))
