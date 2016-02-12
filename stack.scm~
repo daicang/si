@@ -1,5 +1,0 @@
-
-(define (save reg)
-  )
-
-(define (restore reg))

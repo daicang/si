@@ -2,8 +2,6 @@
 ;;
 ;; machine.scm -> stack.scm
 ;;            |-> basic-procedure.scm -> register.scm
-;; 
-;; Any problem with current dependency?
 
 (load "register.scm")
 
