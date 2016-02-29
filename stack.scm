@@ -37,8 +37,3 @@
 
 (define (push stack value)
   ((stack 'push) value))
-
-;; (define (save reg)
-;;   )
-
-;; (define (restore reg))

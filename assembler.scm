@@ -1,12 +1,21 @@
 ;; assembler.scm
 
+;; Assembler entry function
+;; Input: controller text, machine object
+;; Output: 
+(define (assemble controller-text machine)
+  (extract-labels controller-text
+		  (lambda (insts labels)
+		    (update-insts! insts labels machine)
+		    insts)))
+
 (define (make-label-entry label-name insts)
   (cons label-name insts))
 
 ;; Construct instructions:
 ;; (cons instruction-text instruction-execution-proc)
 ;;
-;; What is i-e-proc?
+;; What is instruction-execution-proc?
 ;; Refer make-execution-procedure
 
 (define (make-instruction text)
@@ -27,7 +36,6 @@
 ;;(define)
 
 ;; make-execution-procedure
-
 (define (make-execution-procedure inst labels machine pc flag stack ops)
   (cond ((eq? (car inst) 'assign)
 	 (make-assign inst machine labels ops pc))
@@ -68,7 +76,6 @@
 			      (recrive (cons (make-instruction next-inst) insts)
 				       labels)))))))
 
-
 (define (update-insts! insts labels machine)
   (let ((pc (get-register machine 'pc))
 	(flag (get-register machine 'flag))
@@ -82,9 +89,3 @@
 	 (instruction-text inst) labels machine pc flag stack ops)))
      insts)))
 
-
-(define (assemble controller-text machine)
-  (extract-labels controller-text
-		  (lambda (insts labels)
-		    (update-insts! insts labels machine)
-		    insts)))

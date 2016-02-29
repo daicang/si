@@ -5,7 +5,6 @@
 
 
 ;; make-new-machine
-;;
 ;; Core: instruction-execution-proc
 (define (make-new-machine)
   (let ((pc (make-register 'pc))
