@@ -1,11 +1,11 @@
 ;; machine.scm
 
 (load "stack.scm")
-(load "basic-procedure.scm") ;; Includes register.scm
-
+(load "register.scm")
 
 ;; make-new-machine
 ;; Core: instruction-execution-proc
+;; 
 (define (make-new-machine)
   (let ((pc (make-register 'pc))
 	(flag (make-register 'flag))
