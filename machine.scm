@@ -5,7 +5,19 @@
 
 ;; make-new-machine
 ;; Core: instruction-execution-proc
-;; 
+;;
+;; 1 stack
+;;
+;; 7 registers:
+;;
+;; exp: expression to evaluate
+;; env: evaluate environment
+;; val: evaluate result
+;; continue: used in recursion
+;; proc: for compound procedure
+;; argl: for compound procedure
+;; unev: unevaluated expression for compound procedure
+
 (define (make-new-machine)
   (let ((pc (make-register 'pc))
 	(flag (make-register 'flag))
