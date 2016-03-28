@@ -3,11 +3,18 @@
 (load "basic-procedure.scm")
 
 ;; Assembler entry function
-;; Input: controller text, machine object
-;; Output: ((<instruction-text> <execution-procedure>) ..)
+;; Input:
+;; controller text, machine object
+;;
+;; Output:
+;; list of machine instructions, each
+;; instruct containes its execution procedure
+;; ((<instruction-text> <execution-procedure>) ..)
 (define (assemble controller-text machine)
   (extract-labels controller-text
 		  (lambda (insts labels)
+		    ;; Call update-insts!
+		    ;; after finishing extract-labels
 		    (update-insts! insts labels machine)
 		    insts)))
 
@@ -15,17 +22,18 @@
   (cons label-name insts))
 
 ;; extract-labels
-;; Separate instructions and labels from text, then call update-insts!
 (define (extract-labels text receive)
   (if (null? text)
-      (receive '() '())
+      (receive '() '()) ;; instruction list / label list
       (extract-labels (cdr test) ;; recursion, warp receive function
 		      (lambda (insts labels)
 			(let ((curr-inst (car text)))
 			  (if (symbol? curr-inst)
+			      ;; A label, add to label list
 			      (receive insts
 				       (cons (make-label-entry curr-inst
 							       insts)))
+			      ;; Add to instruction list
 			      (recrive (cons (make-instruction curr-inst) insts)
 				       labels)))))))
 

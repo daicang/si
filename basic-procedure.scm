@@ -2,9 +2,10 @@
 ;;
 ;; Require: stack.scm register.scm (load in machine.scm)
 ;;
-;; Instruction: TODO: is it true? see (operation-exp?)
+;; Instruction:
+;;
 ;; ('instruction-name ('register-name expression))
-;;   car                cadr
+;;  ^ operation-exp: tagged with 'op here
 
 
 ;; Helpers
