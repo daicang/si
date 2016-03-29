@@ -2,13 +2,14 @@
 
 (load "stack.scm")
 (load "register.scm")
+(load "assembler.scm") ;; Call assemble in make-machine
 
 ;; make-new-machine
 (define (make-new-machine)
   ;; Construct an object, which contains:
   ;; 1. stack
   ;; 2. register table (has PC and FLAG initially)
-  ;; 3. operate table
+  ;; 3. operator table
   ;; 4. instruction sequence
   (let ((pc (make-register 'pc))
 	(flag (make-register 'flag))
@@ -16,7 +17,9 @@
 	(the-instruction-sequence '()))
     
     (let ((the-ops
-	   ;; (('initialize-stack (lambda () (stack 'initialize))))
+	   ;; Library routine
+	   ;; Initiate state:
+	   ;; (('initialize-stack (lambda () (stack 'initialize))) ...)
 	   (list (list 'initialize-stack
 		       (lambda () (stack 'initialize)))))
 
@@ -55,9 +58,10 @@
 	      (begin
 		;; Execute instructions
 		;; instruction-execution-proc is cdr,
-		;; so this is ((cdr (car insts)))
+		;; so to execute it: ((cdr (car insts)))
 		;;
 		;; Where is advance-pc?
+		;; => in each execution procedure
 		((instruction-execution-proc (car insts)))
 		(execute)))))
 
@@ -65,6 +69,8 @@
       ;; the-instruction-sequence and ops?
       (define (dispatch msg)
 	(cond ((eq? msg 'start)
+	       ;; Copy instructions:
+	       ;; the-instruction-sequence => pc
 	       (set-contents! pc the-instruction-sequence)
 	       (execute))
 	      
@@ -119,5 +125,6 @@
 	      register-names)
     ((machine 'install-operations) ops)
     ((machine 'install-instruction-sequence)
+     ;; Entry point
      (assemble controller-text machine))
     machine))

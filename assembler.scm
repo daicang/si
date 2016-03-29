@@ -1,6 +1,19 @@
 ;; assembler.scm
+;; Function assemble called by make-machine in machine.scm
 
+;; Require "make-<instruction>" procedures
 (load "basic-procedure.scm")
+
+;; Instruction structure
+;; (<text> <execution-proc>)
+(define (instruction-text inst)
+  (car inst))
+
+(define (instruction-execution-proc inst)
+  (cdr inst))
+
+(define (set-instruction-execution-proc! inst proc)
+  (set-cdr! inst proc))
 
 ;; Assembler entry function
 ;; Input:
@@ -18,27 +31,39 @@
 		    (update-insts! insts labels machine)
 		    insts)))
 
-(define (make-label-entry label-name insts)
-  (cons label-name insts))
 
 ;; extract-labels
+;; The machine instruction contains:
+;; 1. the instruction
+;; 2. corresponding execution procedure
+;; (2) is set in update-insts!
 (define (extract-labels text receive)
   (if (null? text)
-      (receive '() '()) ;; instruction list / label list
-      (extract-labels (cdr test) ;; recursion, warp receive function
+      ;; Initialize instruction list / label list
+      (receive '() '())
+      (extract-labels (cdr text)
 		      (lambda (insts labels)
 			(let ((curr-inst (car text)))
 			  (if (symbol? curr-inst)
 			      ;; A label, add to label list
-			      (receive insts
-				       (cons (make-label-entry curr-inst
-							       insts)))
+			      ;; ((<label-name> <instruction>))
+			      (receive
+			       insts
+			       (cons (make-label-entry curr-inst insts)))
 			      ;; Add to instruction list
-			      (recrive (cons (make-instruction curr-inst) insts)
-				       labels)))))))
+			      ;; ((<instruction-text>) ...)
+			      (receive
+			       (cons (make-instruction curr-inst) insts)
+			       labels)))))))
+
+(define (make-instruction text)
+  (cons text '()))
+
+(define (make-label-entry label-name insts)
+  (cons label-name insts))
 
 ;; update-insts!
-;; Call make-execution-procedure to make procedure, then set to inst.
+;; Set (cdr <instruction>)
 (define (update-insts! insts labels machine)
   (let ((pc (get-register machine 'pc))
 	(flag (get-register machine 'flag))
@@ -46,27 +71,23 @@
 	(ops (machine 'operations)))
     (for-each
      (lambda (inst)
-       (set-instruction-execution-proc!
+       (set-instruction-execution-proc! ;; set-cdr!
 	inst
 	(make-execution-procedure
 	 (instruction-text inst) labels machine pc flag stack ops)))
      insts)))
 
-;; Instruction
-;; (<text> <execution-proc>)
-(define (make-instruction text)
-  (cons text '()))
-
-(define (instruction-text inst)
-  (car inst))
-
-(define (instruction-execution-proc inst)
-  (cdr inst))
-
-(define (set-instruction-execution-proc! inst proc)
-  (set-cdr! inst proc))
 
 ;; make-execution-procedure
+;;
+;; Dispatch 7 basic instructions:
+;; ASSIGN
+;; TEST
+;; BRANCH
+;; GOTO
+;; SAVE
+;; RESTORE
+;; PERFORM
 (define (make-execution-procedure inst labels machine pc flag stack ops)
   (cond ((eq? (car inst) 'assign)
 	 (make-assign inst machine labels ops pc))
