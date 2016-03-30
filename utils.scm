@@ -1,20 +1,48 @@
 ;; utils.scm
-
-;;
-;; Require:
-;; environment.scm
+;; TODO: rearrange functions
+;; (currently most of them are copied from the meta-circular evaluator)
 
 
-;; Tagged-list/quote/self-evaluating/variable
+;; Environment
+(define (get-global-environment) the-global-environment)
+
+;; I/O
+(define (prompt-for-input string)
+  (newline)
+  (display string)
+  (newline))
+
+(define (announce-output string)
+  (newline)
+  (display string)
+  (newline))
+
+(define (user-print obj)
+  (if (compound-procedure? obj)
+      (display (list 'compound-procedure
+		     (procedure-parameters obj)
+		     (procedure-body obj)))
+      (display obj)))
+
+;; Procedure
+(define (compound-procedure? p) (tagged-list? p 'procedure))
+
+(define (procedure-parameters p) (cadr p))
+
+(define (procedure-body p) (caddr p))
+
+(define (procedure-environment p) (cadddr p))
+
+(define (empty-arglist) '())
+
+(define (adjoin-arg arg arglist)
+  (append arglist (list arg)))
+
+;; Utils
 (define (tagged-list? exp tag)
   (if (pair? exp)
       (eq? (car exp) tag)
       #f))
-
-(define (quoted? exp)
-  (tagged-list? exp 'quote))
-
-(define (text-of-quotation exp) (cadr exp))
 
 (define (self-evaluating? exp)
   (cond ((number? exp) #t)
@@ -22,8 +50,15 @@
 	((or (eq? exp #t) (eq? exp #f)) #t)
 	(else #f)))
 
+(define (quoted? exp)
+  (tagged-list? exp 'quote))
+
+(define (text-of-quotation exp) (cadr exp))
+
 (define (variable? exp) (symbol? exp))
 
+
+;; original
 
 ;; Ture/false
 (define (true? x) (not (eq? x #f)))
@@ -290,6 +325,8 @@
 (define (first-operand exp) (car exp))
 
 (define (rest-operands exp) (cdr exp))
+
+(define (last-operand? exp) (null? (cdr exp)))
 
 
 ;; Input from file
