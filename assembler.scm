@@ -45,12 +45,28 @@
 		      (lambda (insts labels)
 			(let ((curr-inst (car text)))
 			  (if (symbol? curr-inst)
-			      ;; A label, add to label list
-			      ;; ((<label-name> <instruction>))
+			      ;; Label, add to label list (contains duplicated
+			      ;; instructions?)
+			      ;;
+			      ;; Example:
+			      ;;
+			      ;; code:
+			      ;;
+			      ;; label1
+			      ;;  (inst1)
+			      ;; label2
+			      ;;  (inst2)
+			      ;;
+			      ;; label list:
+			      ;;
+			      ;; ((label1 ((inst1) (inst2)))
+			      ;;  (label2 ((inst2))))
+			      ;;
+			      ;; ((<label-name> <instructions>) ...)
 			      (receive
 			       insts
 			       (cons (make-label-entry curr-inst insts)))
-			      ;; Add to instruction list
+			      ;; Instruction, add to instruction list
 			      ;; ((<instruction-text>) ...)
 			      (receive
 			       (cons (make-instruction curr-inst) insts)

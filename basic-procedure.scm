@@ -1,11 +1,6 @@
 ;; basic-procedure.scm
 ;;
 ;; Require: stack.scm register.scm (load in machine.scm)
-;;
-;; Instruction:
-;;
-;; ('instruction-name ('register-name expression))
-;;  ^ operation-exp: tagged with 'op here
 
 
 ;; Helpers
@@ -83,6 +78,9 @@
       ;; ((lambda (x) (x)) '(lambda () 1)) => (lambda () 1) is not applicable
       ;; ((lambda (x) (x)) (lambda () 1)) => 1
       ;; ((lambda () 1)) => 1
+      ;;
+      ;; Use Scheme's original "apply", and the "op" content
+      ;; is interpreted by original Scheme interpreter
       (apply op (map (lambda (p) (p)) aprocs)))))
 
 ;; ASSIGN
