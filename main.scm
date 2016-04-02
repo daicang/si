@@ -1,16 +1,28 @@
 ;; main.scm
 
+;; Inport meta-circular evaluater functions
+(load "environment.scm")
+(load "io.scm")
+(load "procedure.scm")
+(load "utils.scm")
+
+;; Register machine
 (load "machine.scm")
-(load "utils.scm") ;; Operator table functions
+
+
+;; Initialize environment
+(define the-global-environment (setup-environment))
 
 ;; Fill operator table
 (define eceval-operations
   (list (list 'self-evaluating? self-evaluating?)
+	;; REPL
 	(list 'get-global-environment get-global-environment)
 	(list 'read read)
 	(list 'prompt-for-input prompt-for-input)
 	(list 'announce-output announce-output)
 	(list 'user-print user-print)
+	;; Type
 	(list 'variable? variable?)
 	(list 'quoted? quoted?)
 	(list 'assignment? assignment?)
@@ -18,9 +30,31 @@
 	(list 'empty-arglist empty-arglist)
 	(list 'no-operands? no-operands?)
 	(list 'adjoin-arg adjoin-arg)
-	;; TODO))
+	(list 'apply-primitive-procedure apply-primitive-procedure)
+	(list 'primitive-procedure? primitive-procedure?)
+	(list 'compound-procedure? compound-procedure?)
+	(list 'procedure-parameters procedure-parameters)
+	(list 'procedure-environment procedure-environment)
+	(list 'procedure-body procedure-body)
+       	(list 'extend-environment extend-environment)
+	(list 'first-exp first-exp)
+	(list 'last-exp? last-exp?)
+	(list 'rest-exps rest-exps)
+	(list 'if-predicate if-predicate)
+	(list 'if-alternative if-alternative)
+	(list 'if-consequent if-consequent)
+	;; Assignment
+	(list 'assignment-variable assignment-variable)
+	(list 'assignment-value assignment-value)
+	(list 'set-variable-value! set-variable-value!)
+	;; Defination
+	(list 'defination-variable defination-variable)
+	(list 'defination-value defination-value)
+	(list 'define-variable! define-variable!)
+	))
 
-;; eval
+
+;; Eval
 ;;
 ;; 7 registers:
 ;;
@@ -32,13 +66,11 @@
 ;; argl: argument list for compound procedure
 ;; unev: unevaluated expression for compound procedure
 
-(define the-global-environment (setup-environment))
-
 (define eceval
   (make-machine
    '(exp env val proc argl continue unev)
    eceval-operations
-   (
+   '(
     read-eval-print-loop
       (perform (op initialize-stack))
       (perform (op prompt-for-input) (const ";;; EC-Eval input:"))
@@ -131,9 +163,108 @@
       (test (op compound-procedure?) (reg proc))
       (branch (label compound-apply))
       (goto (label unknown-procedure-type))
-      ;; TODO))
-
-
+    primitive-apply
+      (assign val (op apply-primitive-procedure)
+	      (reg proc)
+	      (reg argl))
+      (restore continue)
+      (goto (reg continue))
+    compound-apply
+      (assign unev (op procedure-parameters)) ;; Parameters
+      (assign env (op procedure-environment) (reg proc))
+      (assign env (op extend-environment)
+	      (reg unev)
+	      (reg argl)
+	      (reg env))
+      (assign unev (op procedure-body) (reg proc))
+      (goto (label ev-sequence))
+    ev-begin
+      (assign unev (op begin-actions) (reg exp))
+      (save continue)
+      (goto (label ev-sequence))
+    ;; ev-sequence: evaluate current exp, 
+    ;; if it's the last, goto ev-sequece-last-exp instead.
+    ev-sequence 
+      (assign exp (op first-exp))
+      (test (op last-exp?) (reg unev))
+      (branch (label ev-sequence-last-exp))
+      (save unev)
+      (save env)
+      (assign continue (label ev-sequence-continue))
+      (goto (label eval-dispatch))
+    ev-sequence-continue
+      (restore env)
+      (restore unev)
+      (assign unev (op rest-exps) (reg unev))
+      (goto (label ev-sequence))
+    ;; Tail recursion: we call eval directly, not saving anything on stack
+    ;; No save/load env and unev 
+    ;; 
+    ;; Question: if we s/l env between exps, is environment-changing 
+    ;; assignments unavailable?
+    ev-sequence-last-exp
+      (restore continue)
+      (goto (label eval-dispatch))
+    ev-if
+      (save exp)
+      (save env)
+      (save continue)
+      (assign continue (label ev-if-decide))
+      (assign exp (op if-predicate) (reg exp))
+      (goto (label eval-dispatch))
+    ev-if-decide
+      (restore continue)
+      (restore env)
+      (restore exp)
+      (test (op true?) (reg val))
+      (branch (label ev-if-consequent))
+    ev-if-alternative
+      (assign exp (op if-alternative) (reg exp))
+      (goto (label eval-dispatch))
+    ev-if-consequent
+      (assign exp (op if-consequent) (reg exp))
+      (goto (label eval-dispatch))
+    ;; Assignment and defination
+    ev-assignment
+       (assign unev (op assignment-variable) (reg exp))
+       (save unev) ;; unev <= variable
+       (assign exp (op assignment-value) (reg exp))
+       (save env) ;; exp <= value
+       (save continue)
+       (assign continue (label ev-assignment-1))
+       (goto (label eval-dispatch))
+     ev-assignment-1
+       (restore continue)
+       (restore env)
+       (restore unev)
+       (perform (op set-variable-value!) (reg unev) (reg val) (reg env))
+       (assign val (const ok))
+       (goto (reg continue))
+     ev-definition
+       (assign unev (op defination-variable) (reg exp))
+       (save unev)
+       (assign exp (op defination-value) (reg exp))
+       (save env)
+       (save continue)
+       (assign continue (label ev-definition-1))
+       (goto (label eval-dispatch))
+     ev-definition-1
+       (restore continue)
+       (restore env)
+       (restore unev)
+       (perform (op define-variable!) (reg unev) (reg val) (reg env))
+       (assign val (const ok))
+       (goto (reg continue))
+     ;; Error handling
+     unknown-procedure-type
+       (assign val (const unknown-procedure-type-error))
+       (goto (label signal-error))
+     unknown-expression-type
+       (assign val (const unknown-expression-type-error))
+       (goto (label signal-error))
+     signal-error
+       (perform (op user-print) (reg val))
+       (goto (label read-eval-print-loop)))))
 
 
 (start eceval)
