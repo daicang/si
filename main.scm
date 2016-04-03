@@ -47,9 +47,9 @@
 	(list 'assignment-variable assignment-variable)
 	(list 'assignment-value assignment-value)
 	(list 'set-variable-value! set-variable-value!)
-	;; Defination
-	(list 'defination-variable defination-variable)
-	(list 'defination-value defination-value)
+	;; Definition
+	(list 'definition-variable definition-variable)
+	(list 'definition-value definition-value)
 	(list 'define-variable! define-variable!)
 	))
 
@@ -224,7 +224,7 @@
     ev-if-consequent
       (assign exp (op if-consequent) (reg exp))
       (goto (label eval-dispatch))
-    ;; Assignment and defination
+    ;; Assignment and definition
     ev-assignment
        (assign unev (op assignment-variable) (reg exp))
        (save unev) ;; unev <= variable
@@ -241,9 +241,9 @@
        (assign val (const ok))
        (goto (reg continue))
      ev-definition
-       (assign unev (op defination-variable) (reg exp))
+       (assign unev (op definition-variable) (reg exp))
        (save unev)
-       (assign exp (op defination-value) (reg exp))
+       (assign exp (op definition-value) (reg exp))
        (save env)
        (save continue)
        (assign continue (label ev-definition-1))
@@ -264,7 +264,8 @@
        (goto (label signal-error))
      signal-error
        (perform (op user-print) (reg val))
-       (goto (label read-eval-print-loop)))))
+       (goto (label read-eval-print-loop))
+     )))
 
 
 (start eceval)
