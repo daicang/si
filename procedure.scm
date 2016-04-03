@@ -23,6 +23,11 @@
 
 (define apply-in-underlying-scheme apply)
 
+(define (adjoin-arg arg arglist)
+  (append arglist (list arg)))
+
+(define (empty-arglist) '())
+
 ;; lookup-variable-value
 ;; Searches given variable start from first frame.
 (define (lookup-variable-value var env)
